@@ -19,6 +19,11 @@ The Super Admin credentials are available in:
 ```
 dashboard/json/superAdminCredential.json
 ```
+## Database File
+
+``````
+ url_shortner.sql
+``````
 
 ## Environment Configuration
 
