@@ -10,6 +10,13 @@
 http://localhost:<PORT_NUMBER>/
 ```
 
+## Database file
+
+```
+ url_shortner.sql
+
+```
+
 Replace `<PORT_NUMBER>` with the port on which your application is running.
 
 ## Super Admin Credentials

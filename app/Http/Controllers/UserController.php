@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Database\Query\Builder;
 use App\Http\Middleware\AuthMiddleware;
-
+use App\Jobs\SendInvoice;
 class UserController extends Controller
 {
     public function logout(Request $request){
@@ -124,7 +124,9 @@ class UserController extends Controller
         'password' => $rand
       );
         
-      Mail::to($request->email)->send(new gmailMail($subject,$data));
+     // Mail::to($request->email)->send(new gmailMail($subject,$data));
+       SendInvoice::dispatch($request->email,$subject,$data);
+
       return redirect()->route('dashboard')->with('success', 'Mail sent successfully.');
 
   }
