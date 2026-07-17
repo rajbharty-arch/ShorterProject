@@ -25,6 +25,8 @@ Route::get('/invite','invite')->name('invite');
 Route::post('/addInvite','addInvite')->name('addInvite');
 Route::get('/dashboard','dashboard')->name('dashboard');
 Route::post('/addURL','addURL')->name('addURL');
+Route::get('/payment/{id}','payment')->name('payment');
+Route::post('/paymentCallback','paymentCallback')->name('paymentCallback');
 });
 
 

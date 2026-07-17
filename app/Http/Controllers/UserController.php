@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\url;
+use App\Models\Payment;
+use Razorpay\Api\Api;
+
 
 use App\Models\company;
 use App\Mail\gmailMail;
@@ -17,6 +20,12 @@ use App\Http\Middleware\AuthMiddleware;
 use App\Jobs\SendInvoice;
 class UserController extends Controller
 {
+    private  $api ;
+    public function __construct(){
+        $this->api = new Api(
+            env('RAZOR_PAY_ID'),
+            env('RAZOR_PAY_SECURTE_KEY'));
+    }
     public function logout(Request $request){
         $request->session()->flush();
         if ($request->session()->has('email')) {
@@ -124,7 +133,6 @@ class UserController extends Controller
         'password' => $rand
       );
         
-     // Mail::to($request->email)->send(new gmailMail($subject,$data));
        SendInvoice::dispatch($request->email,$subject,$data);
 
       return redirect()->route('dashboard')->with('success', 'Mail sent successfully.');
@@ -134,9 +142,10 @@ class UserController extends Controller
   public function addURL(Request $request){
      $insertData=  url::create([
                       'org_url' => $request->org_url,
-                      'm_url' => rand(),
+                      'm_url'   => rand(),
                       'user_id' => AUTH::user()->id,
-                      'hits' =>  0,
+                      'hits'    =>  0,
+                      'amount'  => $request->amount,
       ]);
       if(!empty( $insertData)){
         echo json_encode(['status' => true]);
@@ -158,5 +167,62 @@ class UserController extends Controller
         return redirect()->route('pageNotFound');
      }
      
+  }
+
+  function payment($id){
+     
+      $urlData =  url::find($id);
+      
+     
+      $order =  $this->api->order->create([
+        'amount' => $urlData->amount*100, // amount in paise (100 paise = 1 rupee)
+        'currency' => 'INR',
+        'receipt' => 'Appsquadz'.rand(1000,9999)
+    ]);
+      
+      Payment::create([
+        'order_id' => $order->id
+      ]);
+      return view('payment',compact('order')); 
+  }
+
+  function paymentCallback(Request $request){
+       $success = true; 
+       if(!empty($request)){
+        $updateTable =  Payment::where('order_id',$request->razorpay_order_id)
+                  ->update([
+                    'razorpay_payment_id' => $request->razorpay_payment_id,
+                    'razorpay_signature'  => $request->razorpay_signature,
+                  ]);
+        if($updateTable){
+            try{
+                $attributes = array(
+                 'razorpay_order_id'   => $request->razorpay_order_id,
+                 'razorpay_payment_id' => $request->razorpay_payment_id,
+                 'razorpay_signature'  => $request->razorpay_signature
+                );
+                $this->api->utility->verifyPaymentSignature($attributes);
+            }catch(\Razorpay\Api\Errors\SignatureVerificationError $e){
+              $success = false;
+              $error = 'Razorpay Signature Verification Failed';
+            }
+            if($success){
+                $paymentDetails =  $this->api->payment->fetch($request->razorpay_payment_id);
+                
+                $updateStatus =  Payment::where('order_id',$request->razorpay_order_id)
+                ->update([
+                  'status' => $paymentDetails->status,
+                ]);
+                if($updateStatus->status == 'captured'){
+                    return view('payment_success');
+
+                }
+            }
+
+        }
+        
+       }
+
+    
   }
 }

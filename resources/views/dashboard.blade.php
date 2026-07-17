@@ -45,8 +45,10 @@
             <th>Short URl</th>
             <th>Long URl</th>
             <th>Hits</th>
+            <th>Amount</th>
             <th>Company</th>
             <th>Created On</th>
+            <th>Action</th>
 
         </tr>
     </thead>
@@ -62,8 +64,12 @@
          </td>
         <td>{{$value->org_url}}</td>
         <td>{{$value->hits}}</td>
+        <td>{{$value->amount}}</td>
         <td>{{$value->company}}</td>
         <td>{{date('d-M-Y',strtotime($value->created_at))}}</td>
+        <td>
+        <a href="{{route('payment',$value->id)}}"><button class="btn btn-sm btn-primary buyClass">Buy</button></a>  
+        </td>
     </tr>
       @endforeach
        
@@ -87,6 +93,8 @@
           <meta name="csrf-token" content="{{ csrf_token() }}">
           <label>URL</label>
           <input type = "text" class="form-control" name = "org_url"><br/>
+          <label>Amount</label>
+          <input type = "text" class="form-control" name = "amount"><br/>
           <button class = "btn btn-sm btn-primary" type= "submit">submit</button>
         </form>
       </div>
@@ -99,6 +107,8 @@
 @endsection
 
 @section('script')
+  {{-- Razor Pay --}}
+  
   <script>
     $(document).on('click', '.copyable-field', function () {
     // Get text inside the cell
